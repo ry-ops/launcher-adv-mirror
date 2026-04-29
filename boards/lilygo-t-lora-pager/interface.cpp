@@ -1,8 +1,16 @@
 #include "powerSave.h"
 #include <globals.h>
 #include <interface.h>
-
 #include <Wire.h>
+
+#define KB_I2C_ADDRESS 0x34
+#define BQ25896_I2C_ADDRESS 0x6B
+#define CAPS_LOCK 0x00
+#define SHIFT 0x1c
+#define KEY_LEFT_SHIFT 0x1c
+#define KEY_FN 0x14
+#define KEY_BACKSPACE 0x1d
+#define KEY_ENTER 0x13
 
 // GPIO expander
 #include <ExtensionIOXL9555.hpp>

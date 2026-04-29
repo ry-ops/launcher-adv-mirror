@@ -1,7 +1,20 @@
 #include "powerSave.h"
 #include <globals.h>
 #include <interface.h>
+#ifdef T_EMBED_1101
+#define CC1101_SW1_PIN 47
+#define CC1101_SW0_PIN 48
+#define CC1101_SS_PIN 12
+#define GROVE_SDA 8
+#define GROVE_SCL 18
+// Fuel Gauge
+#define USE_BQ27220_VIA_I2C
+#define BQ27220_I2C_ADDRESS 0x55
+#define BQ27220_I2C_SDA GROVE_SDA
+#define BQ27220_I2C_SCL GROVE_SCL
+#define BATTERY_DESIGN_CAPACITY 1300
 
+#endif
 // Rotary encoder
 #include <RotaryEncoder.h>
 RotaryEncoder *encoder = nullptr;
@@ -19,7 +32,6 @@ XPowersPPM PPM;
 #endif
 
 #ifdef USE_BQ27220_VIA_I2C
-#define BATTERY_DESIGN_CAPACITY 1300
 #include <bq27220.h>
 BQ27220 bq;
 #endif
@@ -68,8 +80,9 @@ void _setup_gpio() {
         PPM.disableOTG();
         PPM.enableCharge();
     }
+#if defined(BATTERY_DESIGN_CAPACITY)
     if (bq.getDesignCap() != BATTERY_DESIGN_CAPACITY) { bq.setDesignCap(BATTERY_DESIGN_CAPACITY); }
-
+#endif
 #endif
 
 #ifdef T_EMBED_1101

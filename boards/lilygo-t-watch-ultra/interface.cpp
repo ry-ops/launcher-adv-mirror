@@ -3,6 +3,14 @@
 #include <interface.h>
 
 // GPIO expander
+// Interrupt IO port
+#define TP_INT (12)
+// External expansion chip IO definition
+#define EXPANDS_DRV_EN (6)
+#define EXPANDS_DISP_EN (7)
+#define EXPANDS_TOUCH_RST (8)
+#define EXPANDS_SD_DET (10)
+
 #include <ExtensionIOXL9555.hpp>
 ExtensionIOXL9555 io;
 
