@@ -4,12 +4,6 @@
 #include "soc/soc_caps.h"
 #include <stdint.h>
 
-// BOOT_MODE 35
-// BOOT_MODE2 36 pullup
-
-#define SDM SD
-#define SDM_SD
-
 static const uint8_t TX = 37;
 static const uint8_t RX = 38;
 
