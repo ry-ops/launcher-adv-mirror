@@ -36,19 +36,20 @@
 static CYD28_TouchR *isrPinptr;
 void isrPin(void);
 // ------------------------------------------------------------
-bool CYD28_TouchR::begin() {
-    pinMode(CYD28_TouchR_MOSI, OUTPUT);
-    pinMode(CYD28_TouchR_MISO, INPUT);
-    pinMode(CYD28_TouchR_CLK, OUTPUT);
-    pinMode(CYD28_TouchR_CS, OUTPUT);
-    digitalWrite(CYD28_TouchR_CLK, LOW);
-    digitalWrite(CYD28_TouchR_CS, HIGH);
-#if CYD28_TouchR_IRQ >= 0
-    pinMode(CYD28_TouchR_IRQ, INPUT);
-    attachInterrupt(digitalPinToInterrupt(CYD28_TouchR_IRQ), isrPin, FALLING);
-#else
-    isrWake = true;
-#endif
+bool CYD28_TouchR::begin(int8_t _sck, int8_t _miso, int8_t _mosi, int8_t _cs, int8_t _irq) {
+    pinMode(_mosi, OUTPUT);
+    pinMode(_miso, INPUT);
+    pinMode(_sck, OUTPUT);
+    pinMode(_cs, OUTPUT);
+    digitalWrite(_sck, LOW);
+    digitalWrite(_cs, HIGH);
+    if (_irq >= 0) {
+        pinMode(_irq, INPUT);
+        attachInterrupt(digitalPinToInterrupt(_irq), isrPin, FALLING);
+    } else {
+        isrWake = true;
+    }
+
     isrPinptr = this;
     return true;
 }
@@ -56,14 +57,14 @@ bool CYD28_TouchR::begin() {
 bool CYD28_TouchR::begin(SPIClass *wspi) {
     _pspi = wspi;
     //_pspi->begin();
-    pinMode(CYD28_TouchR_CS, OUTPUT);
-    digitalWrite(CYD28_TouchR_CS, HIGH);
-#if CYD28_TouchR_IRQ >= 0
-    pinMode(CYD28_TouchR_IRQ, INPUT);
-    attachInterrupt(digitalPinToInterrupt(CYD28_TouchR_IRQ), isrPin, FALLING);
-#else
-    isrWake = true;
-#endif
+    pinMode(_cs, OUTPUT);
+    digitalWrite(_cs, HIGH);
+    if (_irq >= 0) {
+        pinMode(_irq, INPUT);
+        attachInterrupt(digitalPinToInterrupt(_irq), isrPin, FALLING);
+    } else {
+        isrWake = true;
+    }
     isrPinptr = this;
 
     return true;
@@ -85,17 +86,17 @@ uint8_t CYD28_TouchR::transfer(uint8_t val) {
         int8_t bit = 8;
         while (bit) {
             bit--;
-            digitalWrite(CYD28_TouchR_MOSI, ((val & (1 << bit)) ? HIGH : LOW)); // Write bit
+            digitalWrite(_miso, ((val & (1 << bit)) ? HIGH : LOW)); // Write bit
             wait(del);
             sck ^= 1u;
-            digitalWrite(CYD28_TouchR_CLK, sck);
+            digitalWrite(_sck, sck);
             /* ... Read bit */
-            bval = digitalRead(CYD28_TouchR_MISO);
+            bval = digitalRead(_miso);
             out <<= 1;
             out |= bval;
             wait(del);
             sck ^= 1u;
-            digitalWrite(CYD28_TouchR_CLK, sck);
+            digitalWrite(_sck, sck);
         }
         return out;
     } else {
@@ -177,7 +178,7 @@ void CYD28_TouchR::update() {
     uint32_t now = millis();
     if (now - msraw < MSEC_THRESHOLD) return;
 
-    digitalWrite(CYD28_TouchR_CS, LOW);
+    digitalWrite(_cs, LOW);
 
     if (_pspi != nullptr) _pspi->beginTransaction(SPI_SETTING);
 
@@ -198,15 +199,13 @@ void CYD28_TouchR::update() {
 
     if (_pspi != nullptr) _pspi->endTransaction();
 
-    digitalWrite(CYD28_TouchR_CS, HIGH);
+    digitalWrite(_cs, HIGH);
 
     if (z < 0) z = 0;
     if (z < threshold) {
         zraw = 0;
         if (z < CYD28_TouchR_Z_THRES_INT) {
-#if CYD28_TouchR_IRQ >= 0
-            isrWake = false;
-#endif
+            if (_irq >= 0) { isrWake = false; }
         }
         return;
     }

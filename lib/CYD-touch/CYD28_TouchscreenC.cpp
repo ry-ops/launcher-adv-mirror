@@ -8,16 +8,13 @@
 static CYD28_TouchC *isrPinptr;
 
 bool CYD28_TouchC::begin(void) {
+    _wireState = false;
 
-    auto _sda = CYD28_TouchC_SDA;
-    auto _scl = CYD28_TouchC_SCL;
-    auto _rst = CYD28_TouchC_RST;
-    auto _int = CYD28_TouchC_INT;
     // Initialize I2C
     if (_sda != -1 && _scl != -1) {
-        Wire.begin(_sda, _scl);
+        _wireState = wire.begin(_sda, _scl);
     } else {
-        Wire.begin();
+        _wireState = wire.begin();
     }
 
     // Int Pin Configuration
@@ -41,7 +38,7 @@ bool CYD28_TouchC::begin(void) {
     // Initialize Touch
     i2c_write(0xFE, 0XFF);
     isrPinptr = this;
-    return true;
+    return _wireState;
 }
 
 bool CYD28_TouchC::touched() {
@@ -64,29 +61,29 @@ uint8_t CYD28_TouchC::i2c_read(uint8_t addr) {
     uint8_t rdData;
     uint8_t rdDataCount;
     do {
-        Wire.beginTransmission(I2C_ADDR_CST820);
-        Wire.write(addr);
-        Wire.endTransmission(false); // Restart
-        rdDataCount = Wire.requestFrom(I2C_ADDR_CST820, 1);
+        wire.beginTransmission(I2C_ADDR_CST820);
+        wire.write(addr);
+        wire.endTransmission(false); // Restart
+        rdDataCount = wire.requestFrom(I2C_ADDR_CST820, 1);
     } while (rdDataCount == 0);
-    while (Wire.available()) { rdData = Wire.read(); }
+    while (wire.available()) { rdData = wire.read(); }
     return rdData;
 }
 
 uint8_t CYD28_TouchC::i2c_read_continuous(uint8_t addr, uint8_t *data, uint32_t length) {
-    Wire.beginTransmission(I2C_ADDR_CST820);
-    Wire.write(addr);
-    if (Wire.endTransmission(true)) return -1;
-    Wire.requestFrom(I2C_ADDR_CST820, length);
-    for (int i = 0; i < length; i++) { *data++ = Wire.read(); }
+    wire.beginTransmission(I2C_ADDR_CST820);
+    wire.write(addr);
+    if (wire.endTransmission(true)) return -1;
+    wire.requestFrom(I2C_ADDR_CST820, length);
+    for (int i = 0; i < length; i++) { *data++ = wire.read(); }
     return 0;
 }
 
 void CYD28_TouchC::i2c_write(uint8_t addr, uint8_t data) {
-    Wire.beginTransmission(I2C_ADDR_CST820);
-    Wire.write(addr);
-    Wire.write(data);
-    Wire.endTransmission();
+    wire.beginTransmission(I2C_ADDR_CST820);
+    wire.write(addr);
+    wire.write(data);
+    wire.endTransmission();
 }
 
 CYD28_TS_Point CYD28_TouchC::convertRawXY(int16_t x, int16_t y) {

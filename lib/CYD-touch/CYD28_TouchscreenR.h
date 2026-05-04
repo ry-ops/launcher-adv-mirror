@@ -21,8 +21,8 @@
  * ----------------------- CYD28 (2.8" cheap yellow display) version --------------------------
  *   using software bit banged SPI and fixed GPIOs  + manual calibration
  * 08.2023 - Piotr Zapart www.hexefx.com
- * 
- * 
+ *
+ *
  */
 
 #ifndef _CYD28_TOUCHSCREENR_H_
@@ -31,23 +31,25 @@
 #include "Arduino.h"
 #include <SPI.h>
 
-#define CYD28_TouchR_Z_THRESH       300
-#define CYD28_TouchR_Z_THRES_INT  75
+#define CYD28_TouchR_Z_THRESH 300
+#define CYD28_TouchR_Z_THRES_INT 75
 
 #ifndef CYD28_TouchR_IRQ
-#define CYD28_TouchR_IRQ  36
+#define CYD28_TouchR_IRQ 36
+#else
+#warning "CYD28_TouchR_IRQ already defined, using that value"
 #endif
 #ifndef CYD28_TouchR_MOSI
-#define CYD28_TouchR_MOSI   32
+#define CYD28_TouchR_MOSI 32
 #endif
 #ifndef CYD28_TouchR_MISO
-#define CYD28_TouchR_MISO   39
+#define CYD28_TouchR_MISO 39
 #endif
 #ifndef CYD28_TouchR_CLK
-#define CYD28_TouchR_CLK  25
+#define CYD28_TouchR_CLK 25
 #endif
 #ifndef CYD28_TouchR_CS
-#define CYD28_TouchR_CS   33
+#define CYD28_TouchR_CS 33
 #endif
 
 // CALIBRAION VALUES
@@ -68,53 +70,55 @@
 #define CYD28_TouchR_ROT 0
 #endif
 
-
 class CYD28_TS_Point {
 public:
-  CYD28_TS_Point(void) : x(0), y(0), z(0) {}
-  CYD28_TS_Point(int16_t x, int16_t y, int16_t z) : x(x), y(y), z(z) {}
-  bool operator==(CYD28_TS_Point p) { return ((p.x == x) && (p.y == y) && (p.z == z)); }
-  bool operator!=(CYD28_TS_Point p) { return ((p.x != x) || (p.y != y) || (p.z != z)); }
-  int16_t x, y, z;
+    CYD28_TS_Point(void) : x(0), y(0), z(0) {}
+    CYD28_TS_Point(int16_t x, int16_t y, int16_t z) : x(x), y(y), z(z) {}
+    bool operator==(CYD28_TS_Point p) { return ((p.x == x) && (p.y == y) && (p.z == z)); }
+    bool operator!=(CYD28_TS_Point p) { return ((p.x != x) || (p.y != y) || (p.z != z)); }
+    int16_t x, y, z;
 };
 
 class CYD28_TouchR {
 public:
-  constexpr CYD28_TouchR(int32_t w, int32_t h)
-    : _delay(2), sizeX_px(w), sizeY_px(h), 
-    touchCalibration_rotate(CYD28_TouchR_ROT&0x01),
-    touchCalibration_invert_x(CYD28_TouchR_ROT&0x02), 
-    touchCalibration_invert_y(CYD28_TouchR_ROT&0x04) { }
-  bool begin();
-  bool begin(SPIClass *tspi);
+    constexpr CYD28_TouchR(int32_t w, int32_t h)
+        : _delay(2), sizeX_px(w), sizeY_px(h), touchCalibration_rotate(CYD28_TouchR_ROT & 0x01),
+          touchCalibration_invert_x(CYD28_TouchR_ROT & 0x02),
+          touchCalibration_invert_y(CYD28_TouchR_ROT & 0x04), _sck(CYD28_TouchR_CLK),
+          _miso(CYD28_TouchR_MISO), _mosi(CYD28_TouchR_MOSI), _cs(CYD28_TouchR_CS), _irq(CYD28_TouchR_IRQ) {}
+    bool begin(
+        int8_t _sck = CYD28_TouchR_CLK, int8_t _miso = CYD28_TouchR_MISO, int8_t _mosi = CYD28_TouchR_MOSI,
+        int8_t _cs = CYD28_TouchR_CS, int8_t _irq = CYD28_TouchR_IRQ
+    );
+    bool begin(SPIClass *tspi);
 
-  CYD28_TS_Point getPointScaled();
-  CYD28_TS_Point getPointRaw();
-  bool touched();
-  void readData(uint16_t *x, uint16_t *y, uint8_t *z);
-  void setRotation(uint8_t n) { rotation = n % 4; }
-  void setThreshold(uint16_t th) { threshold = th;}
-  void setTouch(uint16_t *parameters);
-  volatile bool isrWake=true;
+    CYD28_TS_Point getPointScaled();
+    CYD28_TS_Point getPointRaw();
+    bool touched();
+    void readData(uint16_t *x, uint16_t *y, uint8_t *z);
+    void setRotation(uint8_t n) { rotation = n % 4; }
+    void setThreshold(uint16_t th) { threshold = th; }
+    void setTouch(uint16_t *parameters);
+    volatile bool isrWake = true;
 
 private:
-  void update();
-  uint8_t transfer(uint8_t);
-  uint16_t transfer16(uint16_t data);
-  void wait(uint_fast8_t del);
-  void convertRawXY(uint16_t *x, uint16_t *y);
-  uint8_t rotation=CYD28_TouchR_ROT;
-  uint16_t xraw=0, yraw=0, zraw=0;
-  uint16_t threshold = CYD28_TouchR_Z_THRESH;
-  uint16_t touchCalibration_x0=CYD28_TouchR_CAL_XMIN,touchCalibration_x1=CYD28_TouchR_CAL_XMAX,touchCalibration_y0=CYD28_TouchR_CAL_YMIN,touchCalibration_y1=CYD28_TouchR_CAL_YMAX;
-  bool touchCalibration_rotate, touchCalibration_invert_x, touchCalibration_invert_y;
-  uint32_t msraw=0x80000000;
-  uint8_t _delay;
-  const  int32_t sizeX_px;
-  const int32_t sizeY_px;
-  SPIClass *_pspi = nullptr;
-
+    void update();
+    int8_t _sck, _miso, _mosi, _cs, _irq;
+    uint8_t transfer(uint8_t);
+    uint16_t transfer16(uint16_t data);
+    void wait(uint_fast8_t del);
+    void convertRawXY(uint16_t *x, uint16_t *y);
+    uint8_t rotation = CYD28_TouchR_ROT;
+    uint16_t xraw = 0, yraw = 0, zraw = 0;
+    uint16_t threshold = CYD28_TouchR_Z_THRESH;
+    uint16_t touchCalibration_x0 = CYD28_TouchR_CAL_XMIN, touchCalibration_x1 = CYD28_TouchR_CAL_XMAX,
+             touchCalibration_y0 = CYD28_TouchR_CAL_YMIN, touchCalibration_y1 = CYD28_TouchR_CAL_YMAX;
+    bool touchCalibration_rotate, touchCalibration_invert_x, touchCalibration_invert_y;
+    uint32_t msraw = 0x80000000;
+    uint8_t _delay;
+    const int32_t sizeX_px;
+    const int32_t sizeY_px;
+    SPIClass *_pspi = nullptr;
 };
 
-
-#endif 
+#endif
