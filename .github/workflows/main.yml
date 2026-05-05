@@ -211,18 +211,20 @@
                   print(f"--- Preparing boards/platformio.ini for: {env_name} ---")
 
                   # Conteúdo do arquivo platformio.ini dinâmico
-                  config_content = (
-                      f"[env:{board_type}]\n"
-                      f"board = {board_type}\n"
-                      f"board_build.partitions = ${{env:{env_name}.board_build.partitions}}\n"
-                      f"build_src_filter = ${{env:{env_name}.build_src_filter}}\n"
-                      f"build_src_flags = ${{env:{env_name}.build_src_flags}}\n"
-                      f"lib_deps =\n\t${{env:{env_name}.lib_deps}}\n"
-                      f"lib_ignore =\n\t${{env:{env_name}.lib_ignore}}\n"
-                  )
+                  lines = [
+                      f"[env:{board_type}]",
+                      f"board = {board_type}",
+                      f"board_build.partitions = ${{env:{env_name}.board_build.partitions}}",
+                      f"build_src_filter = ${{env:{env_name}.build_src_filter}}",
+                      f"build_src_flags = ${{env:{env_name}.build_src_flags}}",
+                      "lib_deps =",
+                      f"\t${{env:{env_name}.lib_deps}}",
+                      "lib_ignore =",
+                      f"\t${{env:{env_name}.lib_ignore}}\n"
+                  ]
 
                   with open("boards/platformio.ini", "w") as f:
-                      f.write(config_content)
+                      f.write("\n".join(lines))
 
                   print(f"Building: {env_name} using board {board_type}")
                   # Executa o build para o board genérico definido no .ini criado
