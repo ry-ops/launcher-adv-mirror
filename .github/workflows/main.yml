@@ -24,41 +24,40 @@
             - { # 1
                 board: "esp32-4mb",
                 env: [
-                  "m5stack-cplus1_1",
-                  "m5stack-c",
-                  "m5stack-core-4Mb",
-                  "CYD-2432S028",
-                  "CYD-2432W328C_2",
-
-                  "CYD-2-USB",
-                  "CYD-2432W328C",
-                  "CYD-2432W328R",
-                  "CYD-2432S024R",
-                  "CYD-2432S032C",
-
                   "CYD-2432S022C",
+                  "CYD-2432S032C",
                   "CYD-2432S032R",
+                  "CYD-3248S035C",
                   "CYD-3248S035R",
-                  "CYD-3248S035C"
+
+                  "elecrow-24B",
+                  "elecrow-28B",
+                  "elecrow-35B",
+                  "elecrow-35Bv2_2",
+                  "headless-esp32-4mb",
+
+                  "m5stack-core-4Mb"
                   ]
               }
             - { # 2
                 board: "esp32-4mb",
                 env: [
-                  "headless-esp32s3-4mb",
-                  "headless-esp32-4mb",
-                  "WaveSentry-R1",
-                  "Phantom_S024R",
-                  "Marauder-v4-OG",
+                  "CYD-2432W328R",
+                  "CYD-2432S024R",
+                  "CYD-2432W328C_2",
+                  "CYD-2432W328C",
+                  "CYD-2-USB",
 
-                  "Marauder-v61",
-                  "Marauder-v7",
+                  "CYD-2432S028",
+                  "m5stack-cplus1_1",
+                  "m5stack-c",
                   "Marauder-Mini",
-                  "elecrow-24B",
-                  "elecrow-28B",
+                  "Marauder-v7",
 
-                  "elecrow-35B",
-                  "elecrow-35Bv2_2"
+                  "Marauder-v4-OG",
+                  "Marauder-v61",
+                  "WaveSentry-R1",
+                  "Phantom_S024R"
                   ]
               }
             - { # 3
@@ -78,66 +77,75 @@
                   ]
               }
             - { # 5
+                board: "esp32-16mb-psram",
+                env: [
+                  "m5stack-paper"
+                  ]
+              }
+            - { # 6
+                board: "ESP32S3-4M",
+                env: [
+                  "headless-esp32s3-4mb"
+                  ]
+              }
+            - { # 7
                 board: "esp32s3-8mb",
                 env: [
                   "m5stack-cardputer",
                   "m5stack-dinmeter"
-                  ] #"m5stack-paper"
-              }
-            - { # 6
-                board: "esp32s3-16mb-psram",
-                env: [
-                  "m5stack-cores3",
-                  "m5stack-paper-s3",
-                  "headless-esp32s3-16mb",
-                  "CYD-8048S043C",
-                  "CYD-8048W550C",
-
-                  "CYD-3248W535C",
-                  "CYD-4827S043R",
-                  "lilygo-t-watch-s3",
-                  "lilygo-t-watch-ultra",
-                  "smoochiee-board",
-
-                  "waveshare-esp32-s3-lcd-147"
-                  ]
-              }
-            - { # 7
-                board: "esp32s3-16mb-psram",
-                env: [
-                  "lilygo-t-dongle-s3-tft",
-                  "lilygo-t-display-S3-touch",
-                  "lilygo-t-display-S3-pro",
-                  "lilygo-t-embed",
-                  "lilygo-t-embed-cc1101",
-
-                  "lilygo-t-lora-pager",
-                  "lilygo-t-deck-plus",
-                  "lilygo-t-deck",
-                  "lilygo-t-deck-pro",
-                  "lilygo-t5-epaper-s3-pro",
-                  # "lilygo-t-display-S3-amoled",
-                  "lilygo-t-hmi"
                   ]
               }
             - { # 8
-                board: "arduino-nesso-n1",
-                env: ["arduino-nesso-n1"]
-              }
-            - { # 9
-                board: "m5stack-tab5",
-                env: ["m5stack-tab5"]
-              }
-            - { # 10
-                board: "nm-cyd-c5",
-                env: ["NM-CYD-C5"]
-              }
-            - { # 11
                 board: "esp32s3-8mb-psram",
                 env: [
                   "m5stack-sticks3",
                   "headless-esp32s3-8mb"
                   ]
+              }
+            - { # 9
+                board: "esp32s3-16mb-psram",
+                env: [
+                  "CYD-8048S043C",
+                  "CYD-8048W550C",
+                  "CYD-3248W535C",
+                  "CYD-4827S043R",
+                  "headless-esp32s3-16mb",
+                  "lilygo-t-deck",
+                  "lilygo-t-deck-plus",
+                  "lilygo-t-deck-pro",
+                  "lilygo-t-display-S3-pro",
+                  "lilygo-t-display-S3-touch",
+                  "lilygo-t-dongle-s3-tft",
+                  ]
+              }
+            - { # 10
+                board: "esp32s3-16mb-psram",
+                env: [
+                  "lilygo-t-embed",
+                  "lilygo-t-embed-cc1101",
+                  "lilygo-t-hmi",
+                  "lilygo-t-lora-pager",
+                  "lilygo-t-watch-s3",
+                  "lilygo-t-watch-ultra",
+                  "lilygo-t5-epaper-s3-pro",
+                  "m5stack-cores3",
+                  "m5stack-paper-s3",
+                  "smoochiee-board",
+                  # "lilygo-t-display-S3-amoled",
+                  "waveshare-esp32-s3-lcd-147"
+                  ]
+              }
+            - { # 11
+                board: "arduino-nesso-n1",
+                env: ["arduino-nesso-n1"]
+              }
+            - { # 12
+                board: "m5stack-tab5",
+                env: ["m5stack-tab5"]
+              }
+            - { # 13
+                board: "nm-cyd-c5",
+                env: ["NM-CYD-C5"]
               }
 
       steps:
@@ -195,60 +203,7 @@
           - name: Run Compile
             run: |
               set -euo pipefail
-              python - <<'PY'
-              import json
-              import os
-              import shutil
-              import subprocess
-
-              board_type = "${{ matrix.board.board }}"
-              envs = json.loads('''${{ toJson(matrix.board.env) }}''')
-
-              # Garante que o diretório boards existe
-              os.makedirs("boards", exist_ok=True)
-
-              for env_name in envs:
-                  print(f"--- Preparing boards/platformio.ini for: {env_name} ---")
-
-                  # Conteúdo do arquivo platformio.ini dinâmico
-                  template = (
-                      "[env:%s]\n"
-                      "board = %s\n"
-                      "board_build.partitions = ${env:%s.board_build.partitions}\n"
-                      "build_src_filter = ${env:%s.build_src_filter}\n"
-                      "build_src_flags = ${env:%s.build_src_flags}\n"
-                      "lib_deps =\n\t${env:%s.lib_deps}\n"
-                      "lib_ignore =\n\t${env:%s.lib_ignore}\n"
-                  )
-
-                  # Preenchemos todos os '%s' com as variáveis correspondentes
-                  config_content = template % (
-                      board_type,
-                      board_type,
-                      env_name,
-                      env_name,
-                      env_name,
-                      env_name,
-                      env_name
-                  )
-
-                  with open("boards/platformio.ini", "w") as f:
-                      f.write(config_content)
-
-                  print(f"Building: {env_name} using board {board_type}")
-                  # Executa o build para o board genérico definido no .ini criado
-                  subprocess.run(["platformio", "run", "-e", board_type], check=True)
-
-                  # Renomeia o binário resultante para o nome do ambiente
-                  src = f"Launcher-{board_type}.bin"
-                  dst = f"Launcher-{env_name}.bin"
-
-                  if os.path.exists(src):
-                      shutil.copy2(src, dst)
-                      print(f"Successfully created: {dst}")
-                  else:
-                      print(f"Error: {src} not found after build!")
-              PY
+              python support_files/build.py --board "${{ matrix.board.board }}" --env ${{ join(matrix.board.env, ' ') }}
 
           - name: Upload Artifacts
             uses: actions/upload-artifact@v4

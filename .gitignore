@@ -6,3 +6,5 @@ checksum.sha256
 build
 node_modules
 
+boards/platformio.ini
+output.txt

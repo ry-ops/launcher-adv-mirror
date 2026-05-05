@@ -11,10 +11,12 @@ section = f"env:{env['PIOENV']}"
 
 # Busca o valor de 'var_board' definido no platformio.ini
 # O segundo argumento é o valor padrão caso não encontre
-board = config.get(section, "var_board", default=None)
+board = config.get(section, "custom_var_board", default=None)
 
 # Caminho para o JSON correspondente à board selecionada
 BOARD_JSON_PATH = os.path.join(env["PROJECT_DIR"], "boards","_jsonfiles", f"{board}.json")
+
+print(f"\ncustom_var_board = {BOARD_JSON_PATH}\n")
 
 def load_board_config():
     """Carrega as configurações da board a partir do JSON."""
