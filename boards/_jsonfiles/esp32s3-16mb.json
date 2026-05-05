@@ -2,13 +2,10 @@
   "build": {
     "arduino": {
       "ldscript": "esp32s3_out.ld",
-      "partitions": "default_16MB.csv",
-      "memory_type": "qio_opi"
+      "partitions": "default_16MB.csv"
     },
     "core": "esp32",
     "extra_flags": [
-      "-DT_EMBED",
-      "-DBOARD_HAS_PSRAM",
       "-DARDUINO_RUNNING_CORE=1",
       "-DARDUINO_EVENT_RUNNING_CORE=1",
       "-DARDUINO_USB_MODE=1",
@@ -36,7 +33,8 @@
   },
   "connectivity": [
     "bluetooth",
-    "wifi"
+    "wifi",
+    "lora"
   ],
   "debug": {
     "default_tool": "esp-builtin",
@@ -49,7 +47,7 @@
     "arduino",
     "espidf"
   ],
-  "name": "LilyGo T-Embed (16M Flash 8M QSPI PSRAM)",
+  "name": "/ESP32-S3 (16M Flash 8M QSPI PSRAM)",
   "upload": {
     "flash_size": "16MB",
     "maximum_ram_size": 327680,
@@ -57,6 +55,6 @@
     "require_upload_port": true,
     "speed": 460800
   },
-  "url": "https://www.lilygo.cc",
-  "vendor": "LilyGo"
+  "url": "https://www.espressif.com",
+  "vendor": "espressif"
 }
