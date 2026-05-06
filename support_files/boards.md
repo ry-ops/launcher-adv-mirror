@@ -12,6 +12,8 @@
 | esp32s3-8mb-psram | support_files/custom_8Mb2.csv | "m5stack-sticks3" |
 | esp32s3-8mb-psram | support_files/custom_8Mb.csv | "headless-esp32s3-8mb" |
 | esp32s3-16mb-psram | support_files/custom_16Mb.csv | "CYD-8048S043C", "CYD-8048W550C", "CYD-3248W535C", "CYD-4827S043R", "headless-esp32s3-16mb", "lilygo-t-deck", "lilygo-t-deck-plus", "lilygo-t-deck-pro","lilygo-t-display-S3-pro", "lilygo-t-display-S3-touch", "lilygo-t-dongle-s3-tft", "lilygo-t-embed", "lilygo-t-embed-cc1101", "lilygo-t-hmi", "lilygo-t-lora-pager", "lilygo-t-watch-s3", "lilygo-t-watch-ultra", "lilygo-t5-epaper-s3-pro", "m5stack-cores3", "m5stack-paper-s3", "smoochiee-board", "waveshare-esp32-s3-lcd-147", "lilygo-t-display-S3-amoled" |
+| esp32c6-16mb | support_files/custom_16Mb.csv | "arduino-nesso-n1" |
+| esp32p4-16mb-psram | support_files/custom_16Mb_p4.csv | "m5stack-tab5" |
 
 
 ## Test command for build

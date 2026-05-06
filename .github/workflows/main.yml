@@ -110,11 +110,13 @@
                   "CYD-3248W535C",
                   "CYD-4827S043R",
                   "headless-esp32s3-16mb",
+
                   "lilygo-t-deck",
                   "lilygo-t-deck-plus",
                   "lilygo-t-deck-pro",
                   "lilygo-t-display-S3-pro",
                   "lilygo-t-display-S3-touch",
+
                   "lilygo-t-dongle-s3-tft",
                   ]
               }
@@ -126,6 +128,7 @@
                   "lilygo-t-hmi",
                   "lilygo-t-lora-pager",
                   "lilygo-t-watch-s3",
+
                   "lilygo-t-watch-ultra",
                   "lilygo-t5-epaper-s3-pro",
                   "m5stack-cores3",
@@ -136,15 +139,15 @@
                   ]
               }
             - { # 11
-                board: "arduino-nesso-n1",
+                board: "esp32c6-16mb",
                 env: ["arduino-nesso-n1"]
               }
             - { # 12
-                board: "m5stack-tab5",
+                board: "esp32p4-16mb-psram",
                 env: ["m5stack-tab5"]
               }
             - { # 13
-                board: "nm-cyd-c5",
+                board: "esp32c5-16mb-psram",
                 env: ["NM-CYD-C5"]
               }
 

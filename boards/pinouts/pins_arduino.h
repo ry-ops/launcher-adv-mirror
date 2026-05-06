@@ -6,7 +6,7 @@
 #elif defined(CONFIG_IDF_TARGET_ESP32C5)
 #include "esp32c5.h"
 #elif defined(ARDUINO_NESSO_N1)
-#include "../boards/arduino-nesso-n1/pins_arduino.h"
+#include "../arduino-nesso-n1/pins_arduino.h"
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
 #include "esp32c6.h"
 #elif defined(CONFIG_IDF_TARGET_ESP32P4)

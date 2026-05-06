@@ -1,19 +1,18 @@
 {
   "build": {
     "arduino":{
-      "ldscript": "esp32_out.ld",
-      "memory_type": "qio_opi"
+      "partitions": "default_16MB.csv"
     },
     "core": "esp32",
-    "extra_flags":  [
-      "-DBOARD_HAS_PSRAM",
-	    "-mfix-esp32-psram-cache-issue",
-	    "-mfix-esp32-psram-cache-strategy=memw",
-      "-DARDUINO_RUNNING_CORE=1",
-      "-DARDUINO_EVENT_RUNNING_CORE=1"
+    "extra_flags": [
+        "-DBOARD_HAS_PSRAM",
+        "-mfix-esp32-psram-cache-issue",
+        "-mfix-esp32-psram-cache-strategy=memw",
+        "-DARDUINO_RUNNING_CORE=1",
+        "-DARDUINO_EVENT_RUNNING_CORE=1"
     ],
     "f_cpu": "240000000L",
-    "f_flash": "40000000L",
+    "f_flash": "80000000L",
     "flash_mode": "qio",
     "mcu": "esp32",
     "variant": "pinouts"
@@ -24,7 +23,7 @@
     "ethernet",
     "can"
   ],
-  "debug": {
+    "debug": {
     "openocd_board": "esp-wroom-32.cfg"
   },
   "frameworks": [
@@ -34,10 +33,10 @@
   "name": "Espressif ESP32 Dev Module",
   "upload": {
     "flash_size": "16MB",
-    "maximum_ram_size": 327680,
+    "maximum_ram_size": 4521984,
     "maximum_size": 16777216,
     "require_upload_port": true,
-    "speed": 1500000
+    "speed": 460800
   },
   "url": "https://en.wikipedia.org/wiki/ESP32",
   "vendor": "Espressif"
