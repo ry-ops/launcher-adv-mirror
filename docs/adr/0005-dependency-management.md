@@ -1,6 +1,7 @@
 # ADR 0005 — Dependency management: CardputerMirror as a submodule, Launcher as a tracked fork
 
-**Status:** Proposed
+**Status:** Accepted — implemented. Submodule pinned per this ADR's process;
+see ADR 0006 for the `lib_ignore` fix the submodule's own layout required.
 **Deciders:** firmware owner
 **Related:** ADR 0001 (adapter architecture, states the intent this ADR makes
 operational); ADR 0003, 0004 (both name specific things this ADR's merge

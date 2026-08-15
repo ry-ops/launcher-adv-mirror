@@ -1,4 +1,5 @@
 #include "idf/launcher_platform.h"
+#include "matrix_input.h"
 #include "powerSave.h"
 #include <Adafruit_TCA8418.h>
 #include <Keyboard.h>
@@ -10,6 +11,11 @@ Keyboard_Class Keyboard;
 // TCA8418 keyboard controller for ADV variant
 Adafruit_TCA8418 tca;
 bool UseTCA8418 = false; // Set to true to use TCA8418 (Cardputer ADV)
+
+// launcher-adv-mirror ADR 0003. Single instance: InputHandler() folds both
+// real TCA8418 events and drained remote (CardputerMirror) events into this
+// SAME state, in the SAME cycle -- see matrix_input.h for why.
+MatrixInputState g_matrixState;
 
 // Keyboard state variables
 bool fn_key_pressed = false;
@@ -73,6 +79,114 @@ inline void mapRawKeyToPhysical(uint8_t keyvalue, uint8_t &row, uint8_t &col) {
     } else {
         row = 0xFF; // invalid
         col = 0xFF;
+    }
+}
+
+/***************************************************************************************
+** Function name: applyMatrixKeyEvent()
+** Location: interface.cpp -- extracted per launcher-adv-mirror ADR 0003
+** Description: the exact per-event logic a real TCA8418 event runs, applied
+**   to st. Called from InputHandler()'s own event loop for physical events,
+**   and from drainRemoteMatrixQueue() (adapters/launcher/LauncherAdapter.cpp)
+**   for CardputerMirror remote key events -- one implementation, two sources.
+***************************************************************************************/
+void applyMatrixKeyEvent(MatrixInputState &st, uint8_t row, uint8_t col, bool pressed) {
+    if (row >= 4 || col >= 14) return;
+
+    AnyKeyPress = true;
+    st.keyEventHandled = true;
+
+    if (handleSpecialKeys(row, col, pressed) > 0) return;
+
+    if (!pressed) {
+        KeyStroke.Clear();
+        LongPressTmp = false;
+    }
+
+    char keyVal = getKeyChar(row, col);
+
+    if (keyVal == KEY_BACKSPACE && col == 13) {
+        if (pressed) {
+            st.delPulse = true;
+            st.esc = true;
+        } else {
+            st.esc = false;
+        }
+    } else if (keyVal == '`') {
+        st.esc = pressed;
+        if (pressed) {
+            st.pendingKey.word.emplace_back(keyVal);
+            st.keyPulse = true;
+        }
+    } else if (keyVal == KEY_ENTER && col == 13) {
+        st.sel = pressed;
+        if (pressed) {
+            st.pendingKey.enter = true;
+            st.pendingKey.word.emplace_back(KEY_ENTER);
+            st.keyPulse = true;
+        }
+    } else if (keyVal == ';') {
+        st.up = pressed;
+        if (pressed) {
+            st.upPulse = true;
+            st.upRepeatTime = launcherMillis() + TCA8418_REPEAT_START_MS;
+            st.pendingKey.word.emplace_back(keyVal);
+            st.keyPulse = true;
+        }
+    } else if (keyVal == ',') {
+        st.prev = pressed;
+        if (pressed) {
+            st.prevPulse = true;
+            st.prevRepeatTime = launcherMillis() + TCA8418_REPEAT_START_MS;
+            st.pendingKey.word.emplace_back(keyVal);
+            st.keyPulse = true;
+        }
+    } else if (keyVal == '.') {
+        st.down = pressed;
+        if (pressed) {
+            st.downPulse = true;
+            st.downRepeatTime = launcherMillis() + TCA8418_REPEAT_START_MS;
+            st.pendingKey.word.emplace_back(keyVal);
+            st.keyPulse = true;
+        }
+    } else if (keyVal == '/') {
+        st.next = pressed;
+        if (pressed) {
+            st.nextPulse = true;
+            st.nextRepeatTime = launcherMillis() + TCA8418_REPEAT_START_MS;
+            st.pendingKey.word.emplace_back(keyVal);
+            st.keyPulse = true;
+        }
+    } else if (keyVal == KEY_TAB) {
+        if (pressed) {
+            st.pendingKey.word.emplace_back(KEY_TAB);
+            st.keyPulse = true;
+        }
+    } else if (keyVal == 0xFF) {
+        if (pressed) {
+            st.pendingKey.fn = true;
+            st.keyPulse = true;
+        }
+    } else if (keyVal == KEY_LEFT_SHIFT) {
+        if (pressed) {
+            st.pendingKey.modifier_keys.emplace_back(KEY_LEFT_SHIFT);
+            st.keyPulse = true;
+        }
+    } else if (keyVal == KEY_LEFT_CTRL) {
+        if (pressed) {
+            st.pendingKey.modifier_keys.emplace_back(KEY_LEFT_CTRL);
+            st.keyPulse = true;
+        }
+    } else if (keyVal == KEY_LEFT_ALT) {
+        if (pressed) {
+            st.pendingKey.modifier_keys.emplace_back(KEY_LEFT_ALT);
+            st.keyPulse = true;
+        }
+    } else {
+        if (pressed) {
+            st.pendingKey.word.emplace_back(keyVal);
+            st.keyPulse = true;
+        }
     }
 }
 
@@ -166,17 +280,7 @@ void _setBrightness(uint8_t brightval) {
 **********************************************************************/
 void InputHandler(void) {
     static unsigned long tm = 0;
-    static unsigned long nextRepeatTime = 0;
-    static unsigned long prevRepeatTime = 0;
-    static unsigned long upRepeatTime = 0;
-    static unsigned long downRepeatTime = 0;
-
-    static bool sel = false;
-    static bool prev = false;
-    static bool next = false;
-    static bool up = false;
-    static bool down = false;
-    static bool esc = false;
+    MatrixInputState &st = g_matrixState;
 
     if (!UseTCA8418 && launcherMillis() - tm < 200 && !LongPress) return;
 
@@ -189,14 +293,21 @@ void InputHandler(void) {
         AnyKeyPress = true;
     }
     if (UseTCA8418) {
-        bool keyEventHandled = false;
-        bool nextPulse = false;
-        bool prevPulse = false;
-        bool upPulse = false;
-        bool downPulse = false;
-        bool delPulse = false;
-        bool keyPulse = false;
-        keyStroke pendingKey;
+        st.keyEventHandled = false;
+        st.nextPulse = false;
+        st.prevPulse = false;
+        st.upPulse = false;
+        st.downPulse = false;
+        st.delPulse = false;
+        st.keyPulse = false;
+        st.pendingKey = keyStroke{};
+
+        // launcher-adv-mirror ADR 0003: remote (CardputerMirror) presses feed
+        // the SAME applyMatrixKeyEvent() real TCA8418 events use, in THIS
+        // cycle, before NextPress/etc. are computed below -- see
+        // matrix_input.h for why this can't just write those globals from
+        // the AsyncTCP task directly.
+        drainRemoteMatrixQueue(st);
 
         if (kb_interrupt) {
             // Drain the FIFO now. Processing one TCA8418 event per 200 ms made quick taps
@@ -222,104 +333,7 @@ void InputHandler(void) {
                 if (!wokeScreen) wokeScreen = wakeUpScreen();
                 if (wokeScreen) continue;
 
-                AnyKeyPress = true;
-                keyEventHandled = true;
-
-                if (handleSpecialKeys(row, col, pressed) > 0) continue;
-
-                if (!pressed) {
-                    KeyStroke.Clear();
-                    LongPressTmp = false;
-                }
-
-                char keyVal = getKeyChar(row, col);
-
-                // launcherConsolePrintf("Key pressed: %c (0x%02X) at row=%d, col=%d\n", keyVal, keyVal, row,
-                // col);
-
-                if (keyVal == KEY_BACKSPACE && col == 13) {
-                    if (pressed) {
-                        delPulse = true;
-                        esc = true;
-                    } else {
-                        esc = false;
-                    }
-                } else if (keyVal == '`') {
-                    esc = pressed;
-                    if (pressed) {
-                        pendingKey.word.emplace_back(keyVal);
-                        keyPulse = true;
-                    }
-                } else if (keyVal == KEY_ENTER && col == 13) {
-                    sel = pressed;
-                    if (pressed) {
-                        pendingKey.enter = true;
-                        pendingKey.word.emplace_back(KEY_ENTER);
-                        keyPulse = true;
-                    }
-                } else if (keyVal == ';') {
-                    up = pressed;
-                    if (pressed) {
-                        upPulse = true;
-                        upRepeatTime = launcherMillis() + TCA8418_REPEAT_START_MS;
-                        pendingKey.word.emplace_back(keyVal);
-                        keyPulse = true;
-                    }
-                } else if (keyVal == ',') {
-                    prev = pressed;
-                    if (pressed) {
-                        prevPulse = true;
-                        prevRepeatTime = launcherMillis() + TCA8418_REPEAT_START_MS;
-                        pendingKey.word.emplace_back(keyVal);
-                        keyPulse = true;
-                    }
-                } else if (keyVal == '.') {
-                    down = pressed;
-                    if (pressed) {
-                        downPulse = true;
-                        downRepeatTime = launcherMillis() + TCA8418_REPEAT_START_MS;
-                        pendingKey.word.emplace_back(keyVal);
-                        keyPulse = true;
-                    }
-                } else if (keyVal == '/') {
-                    next = pressed;
-                    if (pressed) {
-                        nextPulse = true;
-                        nextRepeatTime = launcherMillis() + TCA8418_REPEAT_START_MS;
-                        pendingKey.word.emplace_back(keyVal);
-                        keyPulse = true;
-                    }
-                } else if (keyVal == KEY_TAB) {
-                    if (pressed) {
-                        pendingKey.word.emplace_back(KEY_TAB);
-                        keyPulse = true;
-                    }
-                } else if (keyVal == 0xFF) {
-                    if (pressed) {
-                        pendingKey.fn = true;
-                        keyPulse = true;
-                    }
-                } else if (keyVal == KEY_LEFT_SHIFT) {
-                    if (pressed) {
-                        pendingKey.modifier_keys.emplace_back(KEY_LEFT_SHIFT);
-                        keyPulse = true;
-                    }
-                } else if (keyVal == KEY_LEFT_CTRL) {
-                    if (pressed) {
-                        pendingKey.modifier_keys.emplace_back(KEY_LEFT_CTRL);
-                        keyPulse = true;
-                    }
-                } else if (keyVal == KEY_LEFT_ALT) {
-                    if (pressed) {
-                        pendingKey.modifier_keys.emplace_back(KEY_LEFT_ALT);
-                        keyPulse = true;
-                    }
-                } else {
-                    if (pressed) {
-                        pendingKey.word.emplace_back(keyVal);
-                        keyPulse = true;
-                    }
-                }
+                applyMatrixKeyEvent(st, row, col, pressed);
             }
 
             //  try to clear the IRQ flag
@@ -330,46 +344,46 @@ void InputHandler(void) {
         }
 
         unsigned long now = launcherMillis();
-        if (next && now >= nextRepeatTime) {
-            nextPulse = true;
-            nextRepeatTime = now + TCA8418_REPEAT_MS;
+        if (st.next && now >= st.nextRepeatTime) {
+            st.nextPulse = true;
+            st.nextRepeatTime = now + TCA8418_REPEAT_MS;
         }
-        if (prev && now >= prevRepeatTime) {
-            prevPulse = true;
-            prevRepeatTime = now + TCA8418_REPEAT_MS;
+        if (st.prev && now >= st.prevRepeatTime) {
+            st.prevPulse = true;
+            st.prevRepeatTime = now + TCA8418_REPEAT_MS;
         }
-        if (up && now >= upRepeatTime) {
-            upPulse = true;
-            upRepeatTime = now + TCA8418_REPEAT_MS;
+        if (st.up && now >= st.upRepeatTime) {
+            st.upPulse = true;
+            st.upRepeatTime = now + TCA8418_REPEAT_MS;
         }
-        if (down && now >= downRepeatTime) {
-            downPulse = true;
-            downRepeatTime = now + TCA8418_REPEAT_MS;
+        if (st.down && now >= st.downRepeatTime) {
+            st.downPulse = true;
+            st.downRepeatTime = now + TCA8418_REPEAT_MS;
         }
 
-        if (!keyEventHandled && !nextPulse && !prevPulse && !upPulse && !downPulse && !LongPress) {
-            sel = false; // avoid multiple selections
-            esc = false; // avoid multiple escapes
+        if (!st.keyEventHandled && !st.nextPulse && !st.prevPulse && !st.upPulse && !st.downPulse && !LongPress) {
+            st.sel = false; // avoid multiple selections
+            st.esc = false; // avoid multiple escapes
         }
-        if (delPulse) {
-            pendingKey.del = true;
-            pendingKey.exit_key = true;
-            keyPulse = true;
+        if (st.delPulse) {
+            st.pendingKey.del = true;
+            st.pendingKey.exit_key = true;
+            st.keyPulse = true;
         }
-        if (keyPulse) {
-            pendingKey.pressed = true;
-            KeyStroke = pendingKey;
-        } else if (!nextPulse && !prevPulse) {
+        if (st.keyPulse) {
+            st.pendingKey.pressed = true;
+            KeyStroke = st.pendingKey;
+        } else if (!st.nextPulse && !st.prevPulse) {
             KeyStroke.Clear();
         }
-        if (nextPulse || prevPulse || keyPulse) AnyKeyPress = true;
+        if (st.nextPulse || st.prevPulse || st.keyPulse) AnyKeyPress = true;
 
-        NextPress = nextPulse;
-        PrevPress = prevPulse;
-        UpPress = upPulse;
-        DownPress = downPulse;
-        SelPress = sel | SelPress; // in case G0 is pressed
-        EscPress = esc;
+        NextPress = st.nextPulse;
+        PrevPress = st.prevPulse;
+        UpPress = st.upPulse;
+        DownPress = st.downPulse;
+        SelPress = st.sel | SelPress; // in case G0 is pressed
+        EscPress = st.esc;
         tm = now;
         return;
     } else {

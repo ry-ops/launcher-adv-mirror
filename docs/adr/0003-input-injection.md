@@ -1,6 +1,8 @@
 # ADR 0003 — Input injection: target Launcher's real `launcherInputLock`/`KeyStroke`
 
-**Status:** Proposed
+**Status:** Accepted — implemented (`matrix_input.h`, `applyMatrixKeyEvent()`,
+`LauncherAdapter`'s remote-key queue). Builds clean; behavior on real
+hardware still unverified.
 **Deciders:** firmware owner
 **Related:** ADR 0001 (adapter architecture); cardputer-adv-mirror ADR 0038
 (`IInputSink`, `RemoteKey`).

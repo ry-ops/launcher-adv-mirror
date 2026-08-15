@@ -1,6 +1,8 @@
 # ADR 0001 — Adapter architecture: this fork consumes CardputerMirror as an unmodified library
 
-**Status:** Proposed
+**Status:** Accepted — implemented. `env:m5stack-cardputer` builds and
+packages end to end (see ADR 0006 for the three build-environment fixes that
+took).
 **Deciders:** firmware owner
 **Related:** cardputer-adv-mirror ADR 0038 (adapter-driven `begin()`, defines the
 contract this ADR consumes); cardputer-adv-mirror ADR 0001/0002 (frame source

@@ -1,6 +1,8 @@
 # ADR 0002 — Frame source for v1: GRAM readback, Canvas tee deferred
 
-**Status:** Proposed
+**Status:** Accepted — implemented (`SpiReadbackFrameSource`, cardputer-adv-mirror
+ADR 0039). Builds clean; correctness on real hardware still unverified — see
+that ADR.
 **Deciders:** firmware owner
 **Related:** ADR 0001 (adapter architecture); cardputer-adv-mirror ADR 0001
 (tee) / 0002 (readback, accepted there); cardputer-adv-mirror ADR 0038

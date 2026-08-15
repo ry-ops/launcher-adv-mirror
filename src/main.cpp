@@ -5,6 +5,12 @@
 #else
 #include <tft.h>
 #endif
+#if defined(CARDPUTER)
+// launcher-adv-mirror ADR 0001: browser display mirror + remote control,
+// added on top of upstream Launcher. See ADAPTER.md.
+#include "CardputerMirror.h"
+#include "LauncherAdapter.h"
+#endif
 #include "esp_ota_ops.h"
 #include "idf/idf_wifi.h"
 #include "idf/launcher_platform.h"
@@ -264,6 +270,18 @@ void setup() {
 
     // Init post setup GPIO before SD Card initializes
     _post_setup_gpio();
+
+#if defined(CARDPUTER)
+    // launcher-adv-mirror ADR 0001. manageWifi=false: Launcher already owns
+    // WiFi connection policy elsewhere in this firmware, and the mirror
+    // would otherwise tear down a working link and start its own SoftAP --
+    // see cmirror::Config's own doc comment.
+    {
+        cmirror::Config mc;
+        mc.manageWifi = false;
+        CardputerMirror.begin(mc, launcherAdapter);
+    }
+#endif
 
 #if defined(HAS_RESISTIVE_TOUCH)
     if (!loadTouchCalibration()) calibrateTouch();
@@ -676,6 +694,12 @@ void loop() {
     }
 
 END:
+#if defined(CARDPUTER)
+    // launcher-adv-mirror ADR 0001. Unconditional -- every loop() path
+    // (normal fall-through and every `goto END`) converges here, same
+    // guarantee cardputer-adv-mirror's own standalone example relies on.
+    CardputerMirror.update();
+#endif
     vTaskDelay(pdMS_TO_TICKS(10));
 }
 

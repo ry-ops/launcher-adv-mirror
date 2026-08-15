@@ -17,6 +17,7 @@ see ADR 0001. Changes to the mirror library itself belong in
 | [0003](0003-input-injection.md) | Input injection: target Launcher's real `launcherInputLock`/`KeyStroke` | Proposed |
 | [0004](0004-spi-bus-lock.md) | SPI bus lock: why `nullptr` is correct today, and what would invalidate it | Proposed |
 | [0005](0005-dependency-management.md) | Dependency management: CardputerMirror as a submodule, Launcher as a tracked fork | Proposed |
+| [0006](0006-build-integration-fixes.md) | Build integration fixes: `lib_ignore`, WDT config, partition size | **Accepted — implemented** |
 
 ## Hardware facts these ADRs rest on
 

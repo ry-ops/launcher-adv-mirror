@@ -1,6 +1,8 @@
 # ADR 0004 — SPI bus lock: why `nullptr` is correct today, and what would invalidate it
 
-**Status:** Proposed
+**Status:** Accepted — implemented (`LauncherAdapter::busLock()` returns
+`nullptr`). Re-verify this ADR's premise on every upstream Launcher merge —
+see Decision.
 **Deciders:** firmware owner
 **Related:** ADR 0001 (adapter architecture); ADR 0002 (readback, the thing
 being locked against); cardputer-adv-mirror ADR 0002 (why the scanner runs on
