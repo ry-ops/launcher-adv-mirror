@@ -203,9 +203,6 @@ static void tryStartCardputerMirror() {
     // hand. Start it here so http://cardputer.local keeps working the same
     // way it did before this integration.
     launcherMdnsStart("cardputer", mc.port);
-    // runSelfTest() stays disabled -- separate, still-open bug (ADR 0039's
-    // SpiReadbackFrameSource can't attach to the display bus on this host at
-    // all yet), unrelated to this timing fix.
 }
 #endif
 
@@ -740,10 +737,9 @@ void loop() {
             if (now2 - lastBeat > 3000) {
                 lastBeat = now2;
                 launcherConsolePrintf(
-                    "[cardputermirror] ok=%s step=%s spierr=%d(0x%x) ip=%s clients=%d frames=%lu\n",
+                    "[cardputermirror] ok=%s step=%s ip=%s clients=%d frames=%lu\n",
                     g_mirrorOk ? "true" : "FALSE",
                     CardputerMirror.debugBeginStep(),
-                    (int)launcherAdapter.debugSpiErr(), (unsigned)launcherAdapter.debugSpiErr(),
                     CardputerMirror.ipAddress().c_str(),
                     CardputerMirror.clientCount(),
                     (unsigned long)CardputerMirror.framesSent()
@@ -771,10 +767,9 @@ END:
         if (now - lastBeat > 3000) {
             lastBeat = now;
             launcherConsolePrintf(
-                "[cardputermirror] ok=%s step=%s spierr=%d(0x%x) ip=%s clients=%d frames=%lu\n",
+                "[cardputermirror] ok=%s step=%s ip=%s clients=%d frames=%lu\n",
                 g_mirrorOk ? "true" : "FALSE",
                 CardputerMirror.debugBeginStep(),
-                (int)launcherAdapter.debugSpiErr(), (unsigned)launcherAdapter.debugSpiErr(),
                 CardputerMirror.ipAddress().c_str(),
                 CardputerMirror.clientCount(),
                 (unsigned long)CardputerMirror.framesSent()

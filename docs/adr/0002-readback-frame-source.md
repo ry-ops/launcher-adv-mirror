@@ -1,8 +1,10 @@
 # ADR 0002 — Frame source for v1: GRAM readback, Canvas tee deferred
 
-**Status:** Accepted — implemented (`SpiReadbackFrameSource`, cardputer-adv-mirror
-ADR 0039). Builds clean; correctness on real hardware still unverified — see
-that ADR.
+**Status:** Superseded by [ADR 0007](0007-switch-to-canvas-tee-frame-source.md)
+— readback turned out not to work at all on this host (arduino-esp32 3.x
+bypasses the SPI bus-registration bookkeeping `SpiReadbackFrameSource`
+depends on), not just to be the slower of two working options as assumed
+here. The Canvas tee this ADR deferred is what shipped instead.
 **Deciders:** firmware owner
 **Related:** ADR 0001 (adapter architecture); cardputer-adv-mirror ADR 0001
 (tee) / 0002 (readback, accepted there); cardputer-adv-mirror ADR 0038
