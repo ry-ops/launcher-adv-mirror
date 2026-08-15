@@ -280,6 +280,7 @@ void setup() {
         cmirror::Config mc;
         mc.manageWifi = false;
         CardputerMirror.begin(mc, launcherAdapter);
+        launcherAdapter.runSelfTest();
     }
 #endif
 

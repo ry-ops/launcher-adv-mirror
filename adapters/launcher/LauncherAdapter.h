@@ -35,6 +35,16 @@ public:
     cmirror::IInputSink&   inputSink()   override { return _inputSink; }
     cmirror::PortMutex*    busLock()     override { return nullptr; }  // ADR 0004
 
+    // Draws the same known pattern ReadbackFrameSource::selfTest() draws
+    // (cardputer-adv-mirror ADR 0002), through Launcher's own tft API since
+    // SpiReadbackFrameSource has no draw path of its own, then reads it back
+    // and reports percent match. Call once after CardputerMirror.begin()
+    // returns -- this is the one piece of "is readback trustworthy on THIS
+    // build" signal Launcher gets; without it, a wrong dummy-bit count or
+    // CS timing bug (cardputer-adv-mirror ADR 0039's stated risk) is
+    // invisible until someone notices a garbled mirror image.
+    int runSelfTest();
+
 private:
     cmirror::SpiReadbackFrameSource _frameSource;
     LauncherInputSink               _inputSink;

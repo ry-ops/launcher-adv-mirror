@@ -3,7 +3,9 @@
  * SPDX-License-Identifier: MIT
  */
 #include "LauncherAdapter.h"
+#include "idf/launcher_platform.h"
 #include "matrix_input.h"
+#include <display.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 
@@ -125,6 +127,41 @@ void LauncherAdapter::begin()
     // Nothing else needed here: CardputerMirror ADR 0038's Mirror::begin()
     // already calls frameSource().begin() and inputSink().begin() itself as
     // part of the adapter-driven begin() sequence.
+}
+
+int LauncherAdapter::runSelfTest()
+{
+    // Same 32x16, 4-quadrant pattern and geometry as ReadbackFrameSource::
+    // selfTest() in cardputer-adv-mirror (ADR 0002) -- drawn here through
+    // Launcher's own tft instead of M5.Display, since that's the whole
+    // reason SpiReadbackFrameSource exists (ADR 0039).
+    const int W = 32, H = 16;
+    static const uint16_t kPat[4] = {0xF800, 0x07E0, 0x001F, 0xFFFF};
+
+    tft->startWrite();
+    for (int y = 0; y < H; ++y)
+        for (int x = 0; x < W; ++x)
+            tft->drawPixel(x, y, kPat[((x >> 2) + (y >> 2)) & 3]);
+    tft->endWrite();
+
+    uint16_t expected[W * H];
+    for (int y = 0; y < H; ++y)
+        for (int x = 0; x < W; ++x)
+            expected[y * W + x] = kPat[((x >> 2) + (y >> 2)) & 3];
+
+    const int score = _frameSource.checkPattern(0, 0, W, H, expected);
+    launcherConsolePrintf(
+        "CardputerMirror: SpiReadbackFrameSource self-test %d%%  <-- THE NUMBER THAT MATTERS\n",
+        score
+    );
+    if (score < 0)       launcherConsolePrintf("  !! self-test could not allocate; inconclusive\n");
+    else if (score >= 95) launcherConsolePrintf("  OK: readback looks reliable on this unit.\n");
+    else if (score >= 60) launcherConsolePrintf("  MARGINAL: expect artifacts in the mirror.\n");
+    else launcherConsolePrintf(
+        "  FAIL: readback unusable on this unit -- check SPI2_HOST/pin config "
+        "(cardputer-adv-mirror ADR 0039, this repo's ADR 0002).\n"
+    );
+    return score;
 }
 
 LauncherAdapter launcherAdapter;
