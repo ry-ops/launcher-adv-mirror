@@ -4,6 +4,7 @@
  */
 #include "LauncherAdapter.h"
 #include "matrix_input.h"
+#include "powerSave.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 
@@ -67,9 +68,23 @@ void drainRemoteMatrixQueue(MatrixInputState& st)
 {
     if (!s_remoteQ) return;
     RemoteEvt e;
+    // launcher-adv-mirror ADR 0008: remote presses must feed the idle timer
+    // the exact same way physical TCA8418 presses do (see this function's
+    // caller in interface.cpp: `if (!wokeScreen) wokeScreen = wakeUpScreen();
+    // if (wokeScreen) continue;`). Without this, wakeUpScreen() is never
+    // called on this path at all -- the device dims and sleeps out from
+    // under an active remote session, and the dark screen looks exactly
+    // like "remote keys aren't working" even though they're still landing.
+    // Mirrors physical precedent exactly: wake on the first event, then
+    // discard this whole drained batch rather than also applying it as a
+    // navigation press -- a physical press that wakes the screen doesn't
+    // separately act as a menu press either.
+    bool wokeScreen = false;
     // Bounded drain, same reasoning as cardputer-adv-mirror's keyinject.cpp:
     // a full queue must not monopolize one InputHandler() cycle.
     for (int i = 0; i < 8 && xQueueReceive(s_remoteQ, &e, 0) == pdTRUE; ++i) {
+        if (!wokeScreen) wokeScreen = wakeUpScreen();
+        if (wokeScreen) continue;
         if (e.kind == Kind::Btn) {
             // No software "virtual press" seam for G0 the way M5Unified's
             // BtnA.setRawState() gives cardputer-adv-mirror's own

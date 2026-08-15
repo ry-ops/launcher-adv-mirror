@@ -13,11 +13,13 @@ see ADR 0001. Changes to the mirror library itself belong in
 | ADR | Title | Status |
 |-----|-------|--------|
 | [0001](0001-adapter-architecture.md) | Adapter architecture: this fork consumes CardputerMirror as an unmodified library | Proposed |
-| [0002](0002-readback-frame-source.md) | Frame source for v1: GRAM readback, Canvas tee deferred | Proposed |
+| [0002](0002-readback-frame-source.md) | Frame source for v1: GRAM readback, Canvas tee deferred | Superseded by 0007 |
 | [0003](0003-input-injection.md) | Input injection: target Launcher's real `launcherInputLock`/`KeyStroke` | Proposed |
 | [0004](0004-spi-bus-lock.md) | SPI bus lock: why `nullptr` is correct today, and what would invalidate it | Proposed |
 | [0005](0005-dependency-management.md) | Dependency management: CardputerMirror as a submodule, Launcher as a tracked fork | Proposed |
 | [0006](0006-build-integration-fixes.md) | Build integration fixes: `lib_ignore`, WDT config, partition size | **Accepted — implemented** |
+| [0007](0007-switch-to-canvas-tee-frame-source.md) | Switch to the Canvas tee frame source; readback abandoned | **Accepted — verified on real hardware** |
+| [0008](0008-remote-input-feeds-idle-timer.md) | Remote key presses must feed the idle/sleep timer | **Accepted — implemented** |
 
 ## Hardware facts these ADRs rest on
 
