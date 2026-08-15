@@ -10,3 +10,6 @@
 [submodule "lib_modules/XPowersLib"]
 	path = lib_modules/XPowersLib
 	url = https://github.com/lewisxhe/XPowersLib.git
+[submodule "lib_modules/CardputerMirror"]
+	path = lib_modules/CardputerMirror
+	url = https://github.com/ry-ops/cardputer-adv-mirror.git
