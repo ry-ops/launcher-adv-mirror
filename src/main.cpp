@@ -10,6 +10,8 @@
 // added on top of upstream Launcher. See ADAPTER.md.
 #include "CardputerMirror.h"
 #include "LauncherAdapter.h"
+static bool g_mirrorOk      = false;
+static bool g_mirrorStarted = false; // begin() attempted (once) -- see tryStartCardputerMirror() below
 #endif
 #include "esp_ota_ops.h"
 #include "idf/idf_wifi.h"
@@ -177,6 +179,36 @@ void _post_setup_gpio() {}
 void _late_setup_gpio() __attribute__((weak));
 void _late_setup_gpio() {}
 
+#if defined(CARDPUTER)
+// launcher-adv-mirror. Deliberately NOT called from setup(): that runs
+// before Launcher's own network stack exists at all -- WiFi doesn't auto-
+// connect here, it needs a manual `wifi connect`/`wifi auto`, sometimes long
+// after boot. Starting CardputerMirror's AsyncWebServer/AsyncWebSocket
+// before lwIP's tcpip task exists crashes ("assert failed: tcpip_api_call
+// ... Invalid mbox"). Called instead from the home menu loop, once, the
+// first time launcherWifiIsConnected() is true -- by then lwIP is
+// definitely up, because a real WiFi connection can't exist without it.
+static void tryStartCardputerMirror() {
+    if (g_mirrorStarted || !launcherWifiIsConnected()) return;
+    g_mirrorStarted = true;
+
+    cmirror::Config mc;
+    mc.manageWifi = false; // Launcher already owns WiFi connection policy
+    g_mirrorOk = CardputerMirror.begin(mc, launcherAdapter);
+    launcherConsolePrintf("CardputerMirror.begin() -> %s\n", g_mirrorOk ? "true" : "FALSE");
+    // The old standalone mirror firmware's own wifi_manager started mDNS
+    // unconditionally at boot with this exact hostname -- CardputerMirror
+    // itself has no mDNS code (that was standalone-example-only), and
+    // Launcher only starts mDNS when its own WUI feature is launched by
+    // hand. Start it here so http://cardputer.local keeps working the same
+    // way it did before this integration.
+    launcherMdnsStart("cardputer", mc.port);
+    // runSelfTest() stays disabled -- separate, still-open bug (ADR 0039's
+    // SpiReadbackFrameSource can't attach to the display bus on this host at
+    // all yet), unrelated to this timing fix.
+}
+#endif
+
 /*********************************************************************
 **  Function: setup
 **  Where the devices are started and variables set
@@ -271,18 +303,14 @@ void setup() {
     // Init post setup GPIO before SD Card initializes
     _post_setup_gpio();
 
-#if defined(CARDPUTER)
-    // launcher-adv-mirror ADR 0001. manageWifi=false: Launcher already owns
-    // WiFi connection policy elsewhere in this firmware, and the mirror
-    // would otherwise tear down a working link and start its own SoftAP --
-    // see cmirror::Config's own doc comment.
-    {
-        cmirror::Config mc;
-        mc.manageWifi = false;
-        CardputerMirror.begin(mc, launcherAdapter);
-        launcherAdapter.runSelfTest();
-    }
-#endif
+    // launcher-adv-mirror: CardputerMirror.begin() is NOT called here.
+    // Learned the hard way: this point in setup() runs before Launcher's own
+    // network stack exists at all (WiFi doesn't auto-connect here -- it
+    // needs a manual `wifi connect`/`wifi auto`, sometimes long after boot).
+    // Starting CardputerMirror's AsyncWebServer/AsyncWebSocket before lwIP's
+    // tcpip task exists crashes with "assert failed: tcpip_api_call ...
+    // Invalid mbox". See tryStartCardputerMirror(), called instead once
+    // WiFi.status() actually confirms a network exists (home menu loop).
 
 #if defined(HAS_RESISTIVE_TOUCH)
     if (!loadTouchCalibration()) calibrateTouch();
@@ -692,6 +720,37 @@ void loop() {
         }
 #endif
         checkReboot();
+#if defined(CARDPUTER)
+        // launcher-adv-mirror ADR 0001/0004. This while(1) is the home menu's
+        // own per-iteration tick -- it owns loopTask almost entirely while
+        // idling here, so the outer loop()'s END: label (below) is only
+        // reached on specific goto transitions, not every idle iteration.
+        // Discovered debugging: the mirror's server never became reachable
+        // and a diagnostic heartbeat never printed while sitting at the home
+        // menu, because CardputerMirror.update() (at END:) was never being
+        // called at all in that state. Calling it here too -- same task as
+        // drawMainMenu()/tft->display() above, which is exactly what ADR
+        // 0002's safety rule requires (readback must run on the same task as
+        // the application's own draws, never a separate one).
+        tryStartCardputerMirror(); // no-ops after the first successful attempt
+        CardputerMirror.update();
+        {
+            static uint32_t lastBeat = 0;
+            const uint32_t now2 = launcherMillis();
+            if (now2 - lastBeat > 3000) {
+                lastBeat = now2;
+                launcherConsolePrintf(
+                    "[cardputermirror] ok=%s step=%s spierr=%d(0x%x) ip=%s clients=%d frames=%lu\n",
+                    g_mirrorOk ? "true" : "FALSE",
+                    CardputerMirror.debugBeginStep(),
+                    (int)launcherAdapter.debugSpiErr(), (unsigned)launcherAdapter.debugSpiErr(),
+                    CardputerMirror.ipAddress().c_str(),
+                    CardputerMirror.clientCount(),
+                    (unsigned long)CardputerMirror.framesSent()
+                );
+            }
+        }
+#endif
     }
 
 END:
@@ -699,7 +758,29 @@ END:
     // launcher-adv-mirror ADR 0001. Unconditional -- every loop() path
     // (normal fall-through and every `goto END`) converges here, same
     // guarantee cardputer-adv-mirror's own standalone example relies on.
+    tryStartCardputerMirror(); // no-ops after the first successful attempt
     CardputerMirror.update();
+    // Periodic, not one-shot: the ESP32-S3's native USB CDC re-enumerates on
+    // reset, so a monitor that attaches even slightly late misses one-shot
+    // setup() prints entirely -- learned the hard way debugging this exact
+    // integration. cardputer-adv-mirror's own standalone example uses the
+    // same pattern for the same reason.
+    {
+        static uint32_t lastBeat = 0;
+        const uint32_t now = launcherMillis();
+        if (now - lastBeat > 3000) {
+            lastBeat = now;
+            launcherConsolePrintf(
+                "[cardputermirror] ok=%s step=%s spierr=%d(0x%x) ip=%s clients=%d frames=%lu\n",
+                g_mirrorOk ? "true" : "FALSE",
+                CardputerMirror.debugBeginStep(),
+                (int)launcherAdapter.debugSpiErr(), (unsigned)launcherAdapter.debugSpiErr(),
+                CardputerMirror.ipAddress().c_str(),
+                CardputerMirror.clientCount(),
+                (unsigned long)CardputerMirror.framesSent()
+            );
+        }
+    }
 #endif
     vTaskDelay(pdMS_TO_TICKS(10));
 }

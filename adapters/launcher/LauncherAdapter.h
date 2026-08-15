@@ -45,6 +45,11 @@ public:
     // invisible until someone notices a garbled mirror image.
     int runSelfTest();
 
+    // TEMPORARY passthrough for cardputer-adv-mirror's own TEMPORARY
+    // diagnostic -- remove alongside SpiReadbackFrameSource::
+    // debugSpiAddDeviceErr() once the real begin() failure is fixed.
+    esp_err_t debugSpiErr() const { return _frameSource.debugSpiAddDeviceErr(); }
+
 private:
     cmirror::SpiReadbackFrameSource _frameSource;
     LauncherInputSink               _inputSink;
