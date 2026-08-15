@@ -10,6 +10,8 @@
 // added on top of upstream Launcher. See ADAPTER.md.
 #include "CardputerMirror.h"
 #include "LauncherAdapter.h"
+#include "serial_console.h"
+#include <ESPAsyncWebServer.h>
 static bool g_mirrorOk      = false;
 static bool g_mirrorStarted = false; // begin() attempted (once) -- see tryStartCardputerMirror() below
 #endif
@@ -203,6 +205,35 @@ static void tryStartCardputerMirror() {
     // hand. Start it here so http://cardputer.local keeps working the same
     // way it did before this integration.
     launcherMdnsStart("cardputer", mc.port);
+
+    // launcher-adv-mirror: /diag -- reachable over HTTP/WiFi (proven reliable
+    // all session) specifically so USB CDC health is inspectable even when
+    // the USB link itself has gone silent, which is exactly the failure mode
+    // this exists for: serial stopped responding to input or heartbeats with
+    // no clear cause, surviving reflashes and power cycles. isConnected()/
+    // isPlugged() distinguish "USB link genuinely down" from "link fine, but
+    // something upstream (taskSerialConsole, or Serial's own TX path) isn't
+    // moving bytes"; consoleLoopTicks() (serial_console.h) distinguishes
+    // "task not scheduled at all" from "task alive, Serial just isn't
+    // delivering/accepting bytes" -- next occurrence, check this instead of
+    // guessing blind again.
+    if (g_mirrorOk) {
+        auto *srv = (AsyncWebServer *)CardputerMirror.serverHandle();
+        if (srv) {
+            srv->on("/diag", HTTP_GET, [](AsyncWebServerRequest *req) {
+                char buf[256];
+                snprintf(
+                    buf, sizeof(buf),
+                    "{\"usbConnected\":%s,\"usbPlugged\":%s,\"consoleLoopTicks\":%lu,"
+                    "\"freeHeap\":%u,\"uptimeMs\":%lu}",
+                    Serial.isConnected() ? "true" : "false", Serial.isPlugged() ? "true" : "false",
+                    (unsigned long)consoleLoopTicks(), (unsigned)ESP.getFreeHeap(),
+                    (unsigned long)launcherMillis()
+                );
+                req->send(200, "application/json", buf);
+            });
+        }
+    }
 }
 #endif
 

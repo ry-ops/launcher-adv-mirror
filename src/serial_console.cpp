@@ -830,9 +830,13 @@ static void handleSerialCommand(const String &line) {
     }
 }
 
+static volatile uint32_t s_consoleLoopTicks = 0;
+uint32_t consoleLoopTicks() { return s_consoleLoopTicks; }
+
 void taskSerialConsole(void *parameter) {
     String buffer;
     while (true) {
+        ++s_consoleLoopTicks;
         while (Serial.available() > 0) {
             char c = static_cast<char>(Serial.read());
             if (c == '\r') continue;

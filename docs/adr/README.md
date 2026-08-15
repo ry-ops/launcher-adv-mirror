@@ -20,6 +20,7 @@ see ADR 0001. Changes to the mirror library itself belong in
 | [0006](0006-build-integration-fixes.md) | Build integration fixes: `lib_ignore`, WDT config, partition size | **Accepted — implemented** |
 | [0007](0007-switch-to-canvas-tee-frame-source.md) | Switch to the Canvas tee frame source; readback abandoned | **Accepted — verified on real hardware** |
 | [0008](0008-remote-input-feeds-idle-timer.md) | Remote key presses must feed the idle/sleep timer | **Accepted — implemented** |
+| [0009](0009-usb-serial-diagnostic-endpoint.md) | `/diag` HTTP endpoint for USB serial health | **Accepted — implemented, root cause still open** |
 
 ## Hardware facts these ADRs rest on
 
