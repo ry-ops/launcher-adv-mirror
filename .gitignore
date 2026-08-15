@@ -1,5 +1,6 @@
 .pio
 .vscode
+.DS_Store
 *.bin
 include/webFiles.h
 checksum.sha256
