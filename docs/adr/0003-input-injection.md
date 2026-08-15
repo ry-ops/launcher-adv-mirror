@@ -1,8 +1,11 @@
 # ADR 0003 — Input injection: target Launcher's real `launcherInputLock`/`KeyStroke`
 
-**Status:** Accepted — implemented (`matrix_input.h`, `applyMatrixKeyEvent()`,
-`LauncherAdapter`'s remote-key queue). Builds clean; behavior on real
-hardware still unverified.
+**Status:** **Accepted — implemented and verified on real hardware.**
+A raw WebSocket client sending `{"t":"key","r":3,"c":12,"shift":false,
+"fn":false}` (the "Next" nav key) moved the on-screen home-menu selection,
+confirming the full path end to end: WS handler -> `LauncherInputSink::
+inject()` -> queue -> `drainRemoteMatrixQueue()` -> `applyMatrixKeyEvent()`
+-> Launcher's real `NextPress`/`KeyStroke` globals -> visible menu movement.
 **Deciders:** firmware owner
 **Related:** ADR 0001 (adapter architecture); cardputer-adv-mirror ADR 0038
 (`IInputSink`, `RemoteKey`).

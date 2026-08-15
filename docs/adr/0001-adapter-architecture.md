@@ -2,7 +2,12 @@
 
 **Status:** Accepted — implemented. `env:m5stack-cardputer` builds and
 packages end to end (see ADR 0006 for the three build-environment fixes that
-took).
+took). **Verified on real hardware:** the dashboard page serves correctly at
+`http://<device-ip>/`, and remote key injection moves the on-screen menu via
+a real WebSocket connection (ADR 0003). The display mirror itself is still
+broken (`SpiReadbackFrameSource` can't attach to the display bus on this
+host yet) but ADR 0041 (in cardputer-adv-mirror) means that no longer takes
+the rest of the integration down with it.
 **Deciders:** firmware owner
 **Related:** cardputer-adv-mirror ADR 0038 (adapter-driven `begin()`, defines the
 contract this ADR consumes); cardputer-adv-mirror ADR 0001/0002 (frame source
