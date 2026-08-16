@@ -38,9 +38,11 @@
 //   wifi auto                                     connect to the first scanned network with
 //                                                  saved credentials, else print the scan
 //   wifi scan                                     scan and list nearby networks
-//   wifi connect <SSID> [PWD]                     connect (PWD optional if SSID is known)
+//   wifi connect <SSID> [PWD|-]                    connect (PWD optional if SSID is known;
+//                                                  use '-' for an open network's empty password)
 //   wifi disconnect                                disconnect and stop the WiFi radio
-//   wifi add <SSID> <PWD>                          save a network without connecting to it
+//   wifi add <SSID> <PWD|->                        save a network without connecting to it
+//                                                  ('-' for an open network's empty password)
 //   wifi del <SSID>                                remove one saved network
 //   wifi clear                                     remove all saved networks
 //   calibrate                                     run the interactive touch calibration wizard
@@ -558,7 +560,7 @@ static void handleWifiAutoCommand() {
 
 static void handleWifiConnectCommand(const std::vector<String> &tokens) {
     if (tokens.size() < 3) {
-        launcherConsolePrintln("Usage: wifi connect <SSID> [PWD]");
+        launcherConsolePrintln("Usage: wifi connect <SSID> [PWD|-]");
         return;
     }
     const String &targetSsid = tokens[2];
@@ -566,9 +568,18 @@ static void handleWifiConnectCommand(const std::vector<String> &tokens) {
 
     String knownPwd;
     bool known = getWifiCredential(targetSsid, knownPwd);
-    String password = havePassword ? tokens[3] : knownPwd;
+    // '-' is an explicit "this is an open network, no password" sentinel --
+    // space-tokenized input (see splitTokens()) has no way to pass a literal
+    // empty string, so a genuinely open, not-yet-known SSID had no way to be
+    // connected to other than supplying a bogus non-empty password. That
+    // bogus password isn't just ignored: the ESP-IDF driver's AP-selection
+    // reads a non-empty config.sta.password as "must be secured," and a
+    // genuinely open AP can't satisfy that, so the whole connect fails with
+    // WIFI_REASON_NO_AP_FOUND_W_COMPATIBLE_SECURITY -- silently, with no hint
+    // the password was the problem.
+    String password = havePassword ? (tokens[3] == "-" ? "" : tokens[3]) : knownPwd;
     if (!havePassword && !known) {
-        launcherConsolePrintln("ERR unknown SSID, password required");
+        launcherConsolePrintln("ERR unknown SSID, password required (use '-' for an open network)");
         return;
     }
 
@@ -596,11 +607,12 @@ static void handleWifiDisconnectCommand() {
 
 static void handleWifiAddCommand(const std::vector<String> &tokens) {
     if (tokens.size() < 4) {
-        launcherConsolePrintln("Usage: wifi add <SSID> <PWD>");
+        launcherConsolePrintln("Usage: wifi add <SSID> <PWD|->");
         return;
     }
     const String &targetSsid = tokens[2];
-    const String &password = tokens[3];
+    // '-' is the same "open network, no password" sentinel as `wifi connect`.
+    const String password = (tokens[3] == "-") ? "" : tokens[3];
     if (!setWifiCredential(targetSsid, password, true)) {
         launcherConsolePrintln("ERR failed to save network");
         return;
@@ -790,9 +802,9 @@ static void printHelp() {
     launcherConsolePrintln("  flash firmware <name> <size>");
     launcherConsolePrintln("  wifi auto");
     launcherConsolePrintln("  wifi scan");
-    launcherConsolePrintln("  wifi connect <SSID> [PWD]");
+    launcherConsolePrintln("  wifi connect <SSID> [PWD|-]");
     launcherConsolePrintln("  wifi disconnect");
-    launcherConsolePrintln("  wifi add <SSID> <PWD>");
+    launcherConsolePrintln("  wifi add <SSID> <PWD|->");
     launcherConsolePrintln("  wifi del <SSID>");
     launcherConsolePrintln("  wifi clear");
     launcherConsolePrintln("  wifi hosted retry");
